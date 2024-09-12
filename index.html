@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Portfolio</title>
+    <style>
+        body {
+            background-color: black;
+            color: purple;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            margin-top: 50px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .form-container {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 8px;
+            width: 300px;
+        }
+
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: purple;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #8a2be2;
+        }
+
+        .sign-in-link {
+            color: purple;
+            text-decoration: none;
+        }
+
+        .sign-in-link:hover {
+            text-decoration: underline;
+        }
+
+        #preview {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to My Portfolio</h1>
+
+        <div id="sign-up-container" class="form-container">
+            <h2>Sign Up</h2>
+            <input type="text" id="signup-username" placeholder="Username">
+            <input type="email" id="signup-email" placeholder="Email">
+            <input type="password" id="signup-password" placeholder="Password">
+            <button onclick="signUp()">Sign Up</button>
+            <p>Already have an account? <a href="#" onclick="showSignIn()" class="sign-in-link">Sign In</a></p>
+        </div>
+
+        <div id="sign-in-container" class="form-container" style="display:none;">
+            <h2>Sign In</h2>
+            <input type="text" id="signin-username" placeholder="Username">
+            <input type="password" id="signin-password" placeholder="Password">
+            <button onclick="signIn()">Sign In</button>
+            <p>Don't have an account? <a href="#" onclick="showSignUp()" class="sign-in-link">Sign Up</a></p>
+        </div>
+
+        <div id="dashboard" class="form-container" style="display:none;">
+            <h2>Dashboard</h2>
+            <button onclick="logOut()">Log Out</button>
+            <button onclick="createNewProject()">Create New Project</button>
+            <div id="project-list"></div>
+        </div>
+
+        <div id="editor" class="form-container" style="display:none;">
+            <h2>Edit Project</h2>
+            <textarea id="html-code" placeholder="HTML Code"></textarea><br>
+            <textarea id="css-code" placeholder="CSS Code"></textarea><br>
+            <textarea id="js-code" placeholder="JavaScript Code"></textarea><br>
+            <button onclick="saveProject()">Save Project</button>
+            <button onclick="showPreview()">Preview Project</button>
+            <div id="preview"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentProjectIndex = null;
+
+        function showSignIn() {
+            document.getElementById('sign-up-container').style.display = 'none';
+            document.getElementById('sign-in-container').style.display = 'block';
+        }
+
+        function showSignUp() {
+            document.getElementById('sign-in-container').style.display = 'none';
+            document.getElementById('sign-up-container').style.display = 'block';
+        }
+
+        function signUp() {
+            const username = document.getElementById('signup-username').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+
+            if (!username || !email || !password) {
+                alert('Please fill out all fields.');
+                return;
+            }
+
+            localStorage.setItem('username', username);
+            localStorage.setItem('email', email);
+            localStorage.setItem('password', password);
+
+            alert('Sign up successful!');
+            showSignIn();
+        }
+
+        function signIn() {
+            const username = document.getElementById('signin-username').value;
+            const password = document.getElementById('signin-password').value;
+
+            const storedUsername = localStorage.getItem('username');
+            const storedPassword = localStorage.getItem('password');
+
+            if (!username || !password) {
+                alert('Please fill out all fields.');
+                return;
+            }
+
+            if (username === storedUsername && password === storedPassword) {
+                document.getElementById('sign-in-container').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                loadProjects();
+            } else {
+                alert('Incorrect username or password.');
+            }
+        }
+
+        function logOut() {
+            document.getElementById('dashboard').style.display = 'none';
+            showSignIn();
+        }
+
+        function createNewProject() {
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('editor').style.display = 'block';
+        }
+
+        function saveProject() {
+            const htmlCode = document.getElementById('html-code').value;
+            const cssCode = document.getElementById('css-code').value;
+            const jsCode = document.getElementById('js-code').value;
+
+            if (!htmlCode || !cssCode || !jsCode) {
+                alert('Please fill out all fields.');
+                return;
+            }
+
+            const projects = JSON.parse(localStorage.getItem('projects')) || [];
+            if (currentProjectIndex === null) {
+                projects.push({ html: htmlCode, css: cssCode, js: jsCode });
+            } else {
+                projects[currentProjectIndex] = { html: htmlCode, css: cssCode, js: jsCode };
+            }
+
+            localStorage.setItem('projects', JSON.stringify(projects));
+            alert('Project saved successfully!');
+            loadProjects();
+            document.getElementById('editor').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+        }
+
+        function loadProjects() {
+            const projects = JSON.parse(localStorage.getItem('projects')) || [];
+            const projectList = document.getElementById('project-list');
+            projectList.innerHTML = '';
+
+            projects.forEach((project, index) => {
+                const projectItem = document.createElement('div');
+                projectItem.textContent = `Project ${index + 1}`;
+                projectItem.onclick = () => editProject(index);
+                projectList.appendChild(projectItem);
+            });
+        }
+
+        function editProject(index) {
+            const projects = JSON.parse(localStorage.getItem('projects')) || [];
+            const project = projects[index];
+
+            document.getElementById('html-code').value = project.html;
+            document.getElementById('css-code').value = project.css;
+            document.getElementById('js-code').value = project.js;
+
+            currentProjectIndex = index;
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('editor').style.display = 'block';
+        }
+
+        function showPreview() {
+            const htmlCode = document.getElementById('html-code').value;
+            const cssCode = document.getElementById('css-code').value;
+            const jsCode = document.getElementById('js-code').value;
+
+            if (!htmlCode || !cssCode || !jsCode) {
+                alert('Please fill out all fields.');
+                return;
+            }
+
+            const previewFrame = document.createElement('iframe');
+            previewFrame.style.width = '100%';
+            previewFrame.style.height = '300px';
+            previewFrame.style.border = 'none';
+
+            const previewContent = `
+                <html>
+                    <head>
+                        <style>${cssCode}</style>
+                    </head>
+                    <body>
+                        ${htmlCode}
+                        <script>${jsCode}<\/script>
+                    </body>
+                </html>
+            `;
+
+            const preview = document.getElementById('preview');
+            preview.innerHTML = '';
+            preview.appendChild(previewFrame);
+
+            const doc = previewFrame.contentWindow.document;
+            doc.open();
+            doc.write(previewContent);
+            doc.close();
+        }
+    </script>
+</body>
+</html>
